@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Virtual: Teorema Pi en Hélices</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- MathJax para LaTeX profesional -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .math-font {
+            font-family: 'Fira Code', monospace;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+        }
+        .step-hidden {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, opacity 0.5s ease;
+            opacity: 0;
+        }
+        .step-visible {
+            max-height: 1000px;
+            opacity: 1;
+        }
+        input[type=range] {
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .table-header {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white py-12 shadow-xl border-b-4 border-emerald-500 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="1"/>
+                    </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+            </svg>
+        </div>
+        <div class="max-w-6xl mx-auto px-6 relative z-10">
+            <div class="flex items-center gap-3 mb-4">
+                <i data-lucide="fan" class="text-emerald-400 animate-spin-slow"></i>
+                <span class="text-emerald-400 font-bold tracking-widest text-sm uppercase">Laboratorio de Mecánica de Fluidos</span>
+            </div>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-2">Teorema $\Pi$ de Buckingham</h1>
+            <p class="text-slate-400 text-xl font-light">Análisis Dimensional: Caso de Estudio de una Hélice Propulsora</p>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 mt-12 space-y-12">
+
+        <!-- FASE 0: Definición del Problema -->
+        <section class="glass-card p-8 border-t-4 border-slate-400">
+            <div class="flex items-center gap-3 mb-6">
+                <i data-lucide="info" class="text-slate-500"></i>
+                <h2 class="text-2xl font-bold text-slate-800">Planteamiento e Identificación</h2>
+            </div>
+            <p class="text-slate-600 mb-8 leading-relaxed">
+                Queremos encontrar una expresión para la <strong>Fuerza de Empuje ($F_e$)</strong> de una hélice. Sabemos que depende de la geometría de la hélice, las propiedades del fluido y las condiciones de operación.
+            </p>
+
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-sm text-left">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-6 py-3">Variable</th>
+                            <th class="px-6 py-3">Símbolo</th>
+                            <th class="px-6 py-3">Dimensión ($M, L, T$)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white">
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Fuerza de Empuje</td>
+                            <td class="px-6 py-4">$F_e$</td>
+                            <td class="px-6 py-4">$[MLT^{-2}]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Diámetro</td>
+                            <td class="px-6 py-4">$D$</td>
+                            <td class="px-6 py-4">$[L]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Densidad del Fluido</td>
+                            <td class="px-6 py-4">$\rho$</td>
+                            <td class="px-6 py-4">$[ML^{-3}]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Velocidad Angular</td>
+                            <td class="px-6 py-4">$\omega$</td>
+                            <td class="px-6 py-4">$[T^{-1}]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Velocidad de Avance</td>
+                            <td class="px-6 py-4">$v_o$</td>
+                            <td class="px-6 py-4">$[LT^{-1}]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Viscosidad Dinámica</td>
+                            <td class="px-6 py-4">$\mu$</td>
+                            <td class="px-6 py-4">$[ML^{-1}T^{-1}]$</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-semibold">Velocidad del Sonido</td>
+                            <td class="px-6 py-4">$c$</td>
+                            <td class="px-6 py-4">$[LT^{-1}]$</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- FASE 1: Cálculo de Grupos Pi -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="glass-card p-8 border-l-4 border-indigo-500">
+                <h3 class="text-xl font-bold text-indigo-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="calculator" size="20"></i> Cálculo de Grupos $\Pi$
+                </h3>
+                <div class="space-y-4 text-slate-700">
+                    <p>Aplicando el teorema de Buckingham:</p>
+                    <ul class="list-disc list-inside space-y-2 font-mono text-sm">
+                        <li>Número de variables ($n$): <span class="font-bold text-indigo-600">7</span></li>
+                        <li>Dimensiones fundamentales ($m$): <span class="font-bold text-indigo-600">3</span> ($M, L, T$)</li>
+                        <li>Número de grupos adimensionales ($k$): $n - m = 4$</li>
+                    </ul>
+                    <div class="p-4 bg-indigo-50 rounded-lg text-indigo-800 font-bold text-center">
+                        Total: 4 Grupos Adimensionales ($\Pi_1, \Pi_2, \Pi_3, \Pi_4$)
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-8 border-l-4 border-emerald-500">
+                <h3 class="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="refresh-cw" size="20"></i> Variables Repetitivas
+                </h3>
+                <p class="text-sm text-slate-600 mb-4">
+                    Seleccionamos 3 variables que contengan todas las dimensiones fundamentales y no formen un grupo adimensional entre sí:
+                </p>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">$D$ (Longitud)</span>
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">$\rho$ (Masa)</span>
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">$\omega$ (Tiempo)</span>
+                </div>
+                <p class="mt-4 text-xs text-slate-500 italic">
+                    * Estas variables aparecerán en todos los núcleos de los grupos $\Pi$.
+                </p>
+            </div>
+        </section>
+
+        <!-- FASE 2: Deducción Algebraica Interactiva -->
+        <section>
+            <div class="flex items-center gap-3 mb-8">
+                <i data-lucide="binary" class="text-blue-500"></i>
+                <h2 class="text-2xl font-bold text-slate-800">2. Deducción de los Grupos $\Pi$</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Pi 1 y Pi 2 (Resumen rápido) -->
+                <div class="glass-card p-6 border-l-4 border-slate-300">
+                    <h3 class="text-xl font-bold text-slate-800 mb-4">Grupos Fundamentales ($\Pi_1, \Pi_2$)</h3>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Coeficiente de Empuje ($\Pi_1$)</span>
+                            <p class="text-lg font-bold text-slate-800">$$\Pi_1 = \frac{F_e}{\rho \omega^2 D^4}$$</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Coeficiente de Avance ($\Pi_2$)</span>
+                            <p class="text-lg font-bold text-slate-800">$$\Pi_2 = \frac{v_o}{\omega D}$$</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pi 3 (Interactivo) -->
+                <div class="glass-card p-6 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-blue-900">Grupo $\Pi_3$: Viscosidad ($\mu$)</h3>
+                        <button onclick="toggleStep('content-pi3')" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition flex items-center gap-2">
+                            <i data-lucide="eye" size="16"></i> Resolver
+                        </button>
+                    </div>
+                    
+                    <div class="bg-slate-900 text-emerald-400 p-6 rounded-xl font-mono text-center mb-4 overflow-x-auto shadow-inner">
+                        $$\Pi_3 = \mu \cdot \rho^a \cdot \omega^b \cdot D^c$$
+                    </div>
+
+                    <div id="content-pi3" class="step-hidden space-y-4">
+                        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-sm">
+                            $[M^0 L^0 T^0] = (ML^{-1}T^{-1})(ML^{-3})^a(T^{-1})^b(L)^c$
+                        </div>
+                        <div class="grid grid-cols-1 gap-2 text-sm">
+                            <div class="p-2 border-l-2 border-blue-300 bg-white"><strong>Masa (M):</strong> $1 + a = 0 \Rightarrow a = -1$</div>
+                            <div class="p-2 border-l-2 border-blue-300 bg-white"><strong>Tiempo (T):</strong> $-1 - b = 0 \Rightarrow b = -1$</div>
+                            <div class="p-2 border-l-2 border-blue-300 bg-white"><strong>Longitud (L):</strong> $-1 - 3a + c = 0 \Rightarrow c = -2$</div>
+                        </div>
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                            <span class="text-xl font-bold text-blue-900">$\Pi_3 = \frac{\mu}{\rho \omega D^2} \Rightarrow Re = \frac{\rho \omega D^2}{\mu}$</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pi 4 (Interactivo) -->
+                <div class="glass-card p-6 border-l-4 border-amber-500 lg:col-span-2">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-amber-900">Grupo $\Pi_4$: Compresibilidad ($c$)</h3>
+                        <button onclick="toggleStep('content-pi4')" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-semibold hover:bg-amber-700 transition flex items-center gap-2">
+                            <i data-lucide="eye" size="16"></i> Resolver
+                        </button>
+                    </div>
+
+                    <div id="content-pi4" class="step-hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900 text-amber-400 p-6 rounded-xl font-mono text-center overflow-x-auto shadow-inner">
+                            $$\Pi_4 = c \cdot \rho^a \cdot \omega^b \cdot D^c$$
+                            <p class="text-slate-500 text-xs mt-2">Mismo análisis dimensional que $v_o$</p>
+                        </div>
+                        <div class="space-y-4">
+                            <p class="text-sm text-slate-600 italic">
+                                Dado que la velocidad del sonido $c$ tiene las mismas dimensiones que la velocidad de avance $v_o$, los exponentes resultan en $a=0, b=-1, c=-1$.
+                            </p>
+                            <div class="p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                                <span class="text-xl font-bold text-amber-900">$\Pi_4 = \frac{c}{\omega D} \Rightarrow Ma = \frac{\omega D}{c}$</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ecuación Maestra -->
+        <section class="bg-slate-900 text-white rounded-3xl p-10 shadow-2xl relative overflow-hidden text-center">
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-emerald-500 to-amber-500"></div>
+            <h2 class="text-slate-400 uppercase tracking-widest font-bold text-sm mb-6">Relación Funcional Final</h2>
+            <div class="text-2xl md:text-4xl font-light">
+                $$ \frac{F_e}{\rho \omega^2 D^4} = f \left( \frac{v_o}{\omega D}, \frac{\rho \omega D^2}{\mu}, \frac{\omega D}{c} \right) $$
+            </div>
+            <div class="flex flex-wrap justify-center gap-6 mt-10">
+                <div class="bg-slate-800/50 px-6 py-3 rounded-2xl border border-emerald-500/30 text-emerald-400 font-bold">$C_T$</div>
+                <div class="bg-slate-800/50 px-6 py-3 rounded-2xl border border-slate-600 text-slate-400 font-bold">$J$</div>
+                <div class="bg-slate-800/50 px-6 py-3 rounded-2xl border border-blue-500/30 text-blue-400 font-bold">$Re$</div>
+                <div class="bg-slate-800/50 px-6 py-3 rounded-2xl border border-amber-500/30 text-amber-400 font-bold">$Ma$</div>
+            </div>
+        </section>
+
+        <!-- Simulador -->
+        <section class="glass-card overflow-hidden shadow-2xl">
+            <div class="p-8 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">3. Laboratorio Virtual de Ensayos</h2>
+                    <p class="text-slate-500 text-sm mt-1">Simula el punto de operación variando los parámetros físicos.</p>
+                </div>
+                <i data-lucide="gauge" class="text-slate-400" size="32"></i>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3">
+                <!-- Controles -->
+                <div class="p-8 border-r border-slate-200 space-y-8 bg-white/50">
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <label class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                <i data-lucide="rotate-cw" size="14"></i> Vel. Angular ($\omega$)
+                            </label>
+                            <span id="val-omega" class="text-emerald-600 font-mono font-bold">120 rad/s</span>
+                        </div>
+                        <input type="range" id="input-omega" min="50" max="800" value="120" class="w-full">
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <label class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                <i data-lucide="maximize" size="14"></i> Diámetro ($D$)
+                            </label>
+                            <span id="val-diam" class="text-emerald-600 font-mono font-bold">1.5 m</span>
+                        </div>
+                        <input type="range" id="input-diam" min="0.5" max="4.0" step="0.1" value="1.5" class="w-full">
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <label class="font-bold text-slate-700 text-sm flex items-center gap-2">
+                                <i data-lucide="wind" size="14"></i> Velocidad Avance ($v_o$)
+                            </label>
+                            <span id="val-vel" class="text-emerald-600 font-mono font-bold">45 m/s</span>
+                        </div>
+                        <input type="range" id="input-vel" min="0" max="250" value="45" class="w-full">
+                    </div>
+                </div>
+
+                <!-- Visualización -->
+                <div class="lg:col-span-2 p-8 space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Avance (J)</span>
+                            <div id="res-J" class="text-3xl font-black text-slate-800">0.00</div>
+                        </div>
+                        <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-center">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Reynolds (Re)</span>
+                            <div id="res-Re" class="text-2xl font-black text-blue-600">0.0e0</div>
+                        </div>
+                        <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm text-center relative overflow-hidden">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">Mach (Ma)</span>
+                            <div id="res-Ma" class="text-3xl font-black text-amber-600">0.00</div>
+                            <div id="warning-ma" class="hidden absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl">CRÍTICO</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 h-[350px]">
+                        <canvas id="propChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-20 py-12 text-center text-slate-400 text-sm border-t border-slate-200 bg-white">
+        <p class="font-semibold mb-2 text-slate-600">Facultad de Ingeniería Aeronáutica</p>
+        <p>Entorno de Análisis Dimensional Interactivo | Basado en el Teorema Pi</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        function toggleStep(id) {
+            const content = document.getElementById(id);
+            content.classList.toggle('step-visible');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const RHO = 1.225;
+            const MU = 1.8e-5;
+            const C_SOUND = 340;
+            const CT_ZERO = 0.12;
+            const J_MAX = 1.4;
+
+            const inputs = {
+                omega: document.getElementById('input-omega'),
+                diam: document.getElementById('input-diam'),
+                vel: document.getElementById('input-vel')
+            };
+
+            const displays = {
+                omega: document.getElementById('val-omega'),
+                diam: document.getElementById('val-diam'),
+                vel: document.getElementById('val-vel'),
+                j: document.getElementById('res-J'),
+                re: document.getElementById('res-Re'),
+                ma: document.getElementById('res-Ma'),
+                warnMa: document.getElementById('warning-ma')
+            };
+
+            const ctx = document.getElementById('propChart').getContext('2d');
+            
+            const curveData = [];
+            for(let j=0; j<=J_MAX; j+=0.05) {
+                curveData.push({x: j, y: CT_ZERO * (1 - Math.pow(j/J_MAX, 2))});
+            }
+
+            const chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Curva Característica (Teórica)',
+                            data: curveData,
+                            showLine: true,
+                            borderColor: '#cbd5e1',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Punto de Operación',
+                            data: [{x: 0, y: 0}],
+                            backgroundColor: '#10b981',
+                            borderColor: '#ffffff',
+                            borderWidth: 3,
+                            pointRadius: 10,
+                            pointHoverRadius: 12
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { title: { display: true, text: 'Coeficiente de Avance (J)' }, min: 0, max: 1.6 },
+                        y: { title: { display: true, text: 'Coeficiente de Empuje (CT)' }, min: 0, max: 0.15 }
+                    }
+                }
+            });
+
+            function update() {
+                const w = parseFloat(inputs.omega.value);
+                const d = parseFloat(inputs.diam.value);
+                const v = parseFloat(inputs.vel.value);
+
+                displays.omega.innerText = `${w} rad/s`;
+                displays.diam.innerText = `${d.toFixed(1)} m`;
+                displays.vel.innerText = `${v} m/s`;
+
+                const J = v / (w * d);
+                const Re = (RHO * w * d * d) / MU;
+                const Ma = (w * d) / C_SOUND;
+
+                displays.j.innerText = J.toFixed(3);
+                displays.re.innerText = Re.toExponential(2);
+                displays.ma.innerText = Ma.toFixed(2);
+
+                if (Ma > 0.7) {
+                    displays.ma.classList.replace('text-amber-600', 'text-red-600');
+                    displays.warnMa.classList.remove('hidden');
+                } else {
+                    displays.ma.classList.replace('text-red-600', 'text-amber-600');
+                    displays.warnMa.classList.add('hidden');
+                }
+
+                const currentCt = Math.max(0, CT_ZERO * (1 - Math.pow(J/J_MAX, 2)));
+                chart.data.datasets[1].data = [{x: J, y: currentCt}];
+                chart.update('none');
+            }
+
+            Object.values(inputs).forEach(input => input.addEventListener('input', update));
+            update();
+        });
+    </script>
+</body>
+</html>
